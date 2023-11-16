@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-center mt-5">
+    <div class="form-container">
+        <h2 class="green-text">Dodaj nowego ucznia</h2><br>
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}<br>
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success btn-lg">Dodaj Ucznia</button>
+        </form>
+    </div>
+</div>
+<br><br><br><br>
+
+<div class="d-flex justify-content-center">
+    <table class="table table-bordered table-striped">
+        <thead>
+             <tr>
+                <th colspan="7" class="text-center">Lista uczniów</th>
+            </tr>
+             <tr>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Zmiana</th>
+                <th>Początek szkolenia</th>
+                <th>Planowany koniec szkolenia</th>
+                <th>Usuń ucznia</th>
+            </tr>
+        </thead>
+        <tbody>
+             {% for uczen in uczniowie %}
+                <tr>
+                    <td>{{ uczen.name }}</td>
+                    <td>{{ uczen.last_name }}</td>
+                    <td>{{ uczen.category }}</td>
+                    <td>{{ uczen.planned_start }}</td>
+                    <td>{{ uczen.planned_end }}</td>
+                    <td>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="uczen_id" value="{{ uczen.id }}">
+                            <button type="submit" name="delete_uczen" class="btn btn-danger btn-sm">Usuń ucznia</button>
+                        </form>
+                    </td>
+                </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

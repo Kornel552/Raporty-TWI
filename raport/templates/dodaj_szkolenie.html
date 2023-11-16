@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+    .green-text {
+        color: green;
+    }
+    .red-text {
+        color: red;
+    }
+    .blue-text {
+        color: blue;
+    }
+    .grey-text {
+    color: grey;
+    }
+
+</style>
+
+<div style="margin-left: 30px;">
+{% if wybrany_uczen %}
+    <div>
+        <h3>Wybrany uczeń: {{ wybrany_uczen }}</h3>
+        <p>Liczba zrealizowanych dni szkoleniowych: <strong class="green-text">{{ liczba_szkolen }} / {{ calkowita_ilosc_szkolen }} ({{ procent_wykonania }}%)</strong></p>
+    </div>
+{% endif %}
+<br>
+    <label for="data">Wybierz datę i rodzaj szkolenia:</label>
+    <form method="post">
+
+        {% csrf_token %}
+        <input type="date" name="data" id="data" required>
+        <select name="typ_zajec" id="typ_zajec">
+            <option></option>
+            <option value="szkolenie">Szkolenie</option>
+            <option value="brak_szkolenia">Brak Szkolenia</option>
+            <option value="nieobecnosc">Urlop</option>
+            <option value="dzien_wolny">Dzień Wolny</option>
+            <option value="audyt">Audyt</option>
+        </select>
+
+        <button type="submit" name="submit_szkolenie" class="btn btn-success btn-sm">Dodaj Datę</button>
+    </form>
+</div>
+<br><br>
+<div>
+    <div class="row">
+        <div class="col-md-7" style="margin-left: 30px;">
+            Opis braku szkoleń:
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="tresc" style="width: 400px; height: 100px;"></textarea>
+                <button type="submit" class="btn btn-success btn-sm" name="submit_tekst">Dodaj Tekst</button>
+            </form>
+        </div>
+        <div class="col-md-4 text-right">
+            <div class="card rounded" style="border: 2px solid black; font-weight: bold;">
+                <div style="margin: 30px;">
+                    <h3><strong>Przyczyny braku szkoleń:</strong></h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for tekst in teksty %}
+                            <div>
+                                <h5><p>{{ tekst.tresc }}   <input type="checkbox" name="tekst_ids" value="{{ tekst.id }}"></p></h5>
+                            </div>
+                        {% endfor %}
+                        <button type="submit" name="delete_tekst" class="btn btn-danger btn-sm">Usuń</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br><br><br>
+
+<div class="d-flex justify-content-center">
+    <table class="table table-bordered table-striped">
+        <form method="post">
+            {% csrf_token %}
+            <thead>
+                 <tr>
+                    <th colspan="7" class="text-center">Harmonogram szkolenia</th>
+                </tr>
+                <tr>
+                    <th><h2 class="green-text">Szkolenia</h2></th>
+                    <th><h2 class="red-text">Brak szkoleń</h2></th>
+                    <th><h2 class="blue-text">Urlopy</h2></th>
+                    <th><h2>Dni wolne</h2></th>
+                    <th><h2 class="grey-text">Audyt</h2class></h2></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        {% for szkolenie in szkolenia %}
+                        <div>
+                            <input type="checkbox" name="szkolenie_ids" value="{{ szkolenie.id }}">
+                            <strong class="green-text">{{ szkolenie.data|date:"d-m-Y" }}</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for brak in braki_szkolenia %}
+                        <div>
+                            <input type="checkbox" name="brak_ids" value="{{ brak.id }}">
+                            <strong class="red-text">{{ brak.data|date:"d-m-Y" }}</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for nieobecnosc in nieobecnosci %}
+                        <div>
+                            <input type="checkbox" name="nieobecnosc_ids" value="{{ nieobecnosc.id }}">
+                            <strong class="blue-text">{{ nieobecnosc.data|date:"d-m-Y" }}</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for wolne in dni_wolne %}
+                        <div>
+                            <input type="checkbox" name="wolne_ids" value="{{ wolne.id }}">
+                            <strong>{{ wolne.data|date:"d-m-Y" }}</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for audyt in audyty %}
+                        <div>
+                            <input type="checkbox" name="audyt_ids" value="{{ audyt.id }}">
+                            <strong class="grey-text">{{ audyt.data|date:"d-m-Y" }}</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <button type="submit" name="delete_dates" class="btn btn-danger btn-sm">Usuń zaznaczone daty</button>
+                    </td>
+                </tr>
+            </tbody>
+        </form>
+    </table>
+</div>
+{% endblock %}

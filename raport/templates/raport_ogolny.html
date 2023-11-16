@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<br>
+<div style="margin-left: 30px;">
+    <a class="btn btn-outline-primary" href="{% url 'signup_page' %}">Zarejestruj nowego instruktora</a>
+</div>
+<br>
+{{ data|safe }}
+<div style="text-align:center">
+    <img src="data:image/png;base64,{{ chart_data }}" alt="Wykres">
+</div>
+<br><br>
+
+<div class="d-flex justify-content-center">
+    <table class="table table-bordered table-striped">
+        <thead>
+             <tr>
+                <th colspan="11" class="text-center">Lista uczniów</th>
+            </tr>
+             <tr>
+                <th>Instruktor</th>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Zmiana</th>
+                <th>Początek szkolenia</th>
+                <th>Planowany koniec szkolenia</th>
+                <th>Ilość zrealizowanych szkoleń</th>
+                <th>Ile dni w planie zostało</th>
+                <th>Ilość urlopów</th>
+                <th>Ilość braków szkoleń</th>
+                <th>Przeprowadzony audyt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for uczen in uczniowie %}
+                <tr>
+                    <td>{{ uczen.user }}</td>
+                    <td>{{ uczen.name }}</td>
+                    <td>{{ uczen.last_name }}</td>
+                    <td>{{ uczen.category }}</td>
+                    <td>{{ uczen.planned_start }}</td>
+                    <td>{{ uczen.planned_end }}</td>
+                    <td><strong style="color: green;" class="green-text">{{ uczen.szkolenie.count }} / {{ uczen.ilosc_szkolen.dni }}
+                        ({{ uczen.procent_wykonania }}%)</strong></td>
+                    <td>{{ uczen.oblicz_pozostaly_czas }}</td>
+                    <td>{{ uczen.ilosc_nieobecnosci }}</td>
+                    <td>{{ uczen.ilosc_braku_szkolen }}</td>
+                    <td>
+                        {% for audyt in uczen.audyt.all %}
+                            {{ audyt.data|date:"d-m-Y" }}<br>
+                        {% empty %}
+                            <span style="color: red;">Brak audytu</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            <thead>
+                 <tr>
+                    <th colspan="11">
+                        <div class="row" style="margin: 20px;">
+                            <div class="col-md-7">
+                                <h3>Przyczyny braku szkoleń:</h3>
+                                {% for t in tekst %}
+                                <p><h5><strong>Napisał: </strong>{{ t.user }}</h5>
+                                <h5>{{ t.tresc }}</h5><br></p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+
+        </tbody>
+    </table>
+</div>
+<br>
+{% endblock %}
