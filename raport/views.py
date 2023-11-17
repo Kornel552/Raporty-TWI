@@ -16,6 +16,8 @@ import matplotlib.ticker as ticker
 from django.views.decorators.http import require_http_methods
 from io import BytesIO
 import base64
+from datetime import timedelta
+from collections import Counter
 
 def signup_page(request):
     context = {}
@@ -219,7 +221,37 @@ def raport_ogolny(request):
         return HttpResponse(f'Tylko administrator ma dostęp do tej strony.\n'
                             f'<a href="http://127.0.0.1:8000/">wróć</a>', status=403)
     data_dict = defaultdict(lambda: {'szkolenia': 0, 'braki_szkolenia': 0, 'nieobecnosci': 0})
+    planowane_szkolenia_na_tydzien = defaultdict(int)
 
+    for uczen in Uczen.objects.all():
+        start_date = uczen.planned_start
+        end_date = uczen.planned_end
+        current_week = start_date.isocalendar()[1]
+
+        dni_wolne_ucznia = [d.data for d in uczen.dzien_wolny.all()]
+        braki_szkolenia_ucznia = [b.data for b in uczen.brak_szkolenia.all()]
+        nieobecnosci_ucznia = [n.data for n in uczen.nieobecnosc.all()]
+
+        dni_przesuniecia = sum(
+            start_date + timedelta(days=i) in braki_szkolenia_ucznia + nieobecnosci_ucznia for i in
+            range((end_date - start_date).days + 1))
+        new_end_date = end_date + timedelta(days=dni_przesuniecia)
+
+        while start_date <= new_end_date:
+            end_of_week = start_date + timedelta(days=(6 - start_date.weekday()))
+            if end_of_week > new_end_date:
+                end_of_week = new_end_date
+
+            dni_szkolenia = (end_of_week - start_date).days + 1
+            dni_wolne_w_tygodniu = sum(
+                start_date + timedelta(days=i) in dni_wolne_ucznia for i in
+                range((end_of_week - start_date).days + 1))
+            dni_szkolenia -= dni_wolne_w_tygodniu
+
+            planowane_szkolenia_na_tydzien[current_week] += min(dni_szkolenia, uczen.ilosc_szkolen.dni)
+
+            start_date = end_of_week + timedelta(days=1)
+            current_week = start_date.isocalendar()[1]
 
     # Zliczanie rekordów i przypisywanie ich do numeru tygodnia
     szkolenia_counts = Szkolenie.objects.annotate(week=ExtractWeek('data')).values('week').annotate(total=Count('id'))
@@ -238,34 +270,30 @@ def raport_ogolny(request):
     # Tworzenie wykresu
     fig, ax = plt.subplots()
 
-    # Zbieranie danych do wykresu
     weeks = sorted(list(data_dict.keys()))
     szkolenia_values = [data_dict[week]['szkolenia'] for week in weeks]
     braki_szkolenia_values = [data_dict[week]['braki_szkolenia'] for week in weeks]
     nieobecnosci_values = [data_dict[week]['nieobecnosci'] for week in weeks]
 
-    # Stosowanie słupków na tym samym wykresie
+    # Stosowanie słupków na wykresie
     ax.bar(weeks, szkolenia_values, color='green', label='Szkolenie')
     ax.bar(weeks, braki_szkolenia_values, color='red', bottom=szkolenia_values, label='Brak szkolenia')
     ax.bar(weeks, nieobecnosci_values, color='blue',
            bottom=[i + j for i, j in zip(szkolenia_values, braki_szkolenia_values)], label='Nieobecność')
 
-    #etykiety do słupków
+    # Etykiety do słupków
     for i in ax.containers:
         ax.bar_label(i, label_type='center')
 
-
-    # Dodawanie dni wolnych jako linii (jeśli są przypisane do tygodni)
-    dni_wolne_counts = DniWolne.objects.annotate(week=ExtractWeek('data')).values('week').annotate(total=Count('id'))
-    for entry in dni_wolne_counts:
-        ax.axhline(y=entry['total'], color='black', linestyle='--')
+    # Dodanie linii dla planowanych szkoleń
+    planowane_szkolenia_values = [planowane_szkolenia_na_tydzien[week] for week in weeks]
+    ax.plot(weeks, planowane_szkolenia_values, color='orange', marker='o', linestyle='-', label='Planowane szkolenia')
 
     # Dodanie etykiet i legendy
     ax.set_xlabel('Tydzień')
     ax.set_ylabel('Dni robocze')
-    for axis in [ax.yaxis]:
-        axis.set_major_locator(ticker.MaxNLocator(integer=True))
-    ax.set_xticks(weeks)  # Ustawienie oznaczeń osi X na numery tygodni
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+    ax.set_xticks(weeks)
     ax.set_xticklabels([f'{week}' for week in weeks])
     ax.legend()
 
