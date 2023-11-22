@@ -1,22 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="d-flex justify-content-center mt-5">
-    <div class="form-container">
+<style>
+    .szary-wiersz {
+    background-color: #f2f2f2;
+}
+
+.bialy-wiersz {
+    background-color: #ffffff;
+}
+</style>
+
+<div class="d-flex justify-content-center mt-8">
+    <div class="form-container" style="text-align: center;">
         <h2 class="green-text">Dodaj nowego ucznia</h2><br>
         <form method="POST">
             {% csrf_token %}
-            {% for field in form %}
-                <div class="form-group">
-                    {{ field.label_tag }}<br>
-                    {{ field }}
-                </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-success btn-lg">Dodaj Ucznia</button>
+            <table class="table">
+                {% for field in form %}
+                    <tr class="{% cycle 'szary-wiersz' 'bialy-wiersz' %}">
+                        <td>
+                            <h5>{{ field.label_tag }}</h5>
+                            {% if field.name == 'planned_end' %}
+                                <h6 style="color: red;">1. Uwzględnij WSZYSTKIE dni wole w planie!</h6>
+                                <h6 style="color: red;">2. Nie uwzględniaj AUDYTU!</h6>
+                            {% endif %}
+                            {{ field }}<br style="margin-bottom: 17px;">
+                        </td>
+                    </tr>
+                {% endfor %}
+                <td class='szary-wiersz'>
+                    <br><button type="submit" class="btn btn-success btn-lg">Dodaj Ucznia</button><br><br>
+                </td>
+            </table>
+
         </form>
     </div>
 </div>
-<br><br><br><br>
+
+<br><br><br>
 
 <div class="d-flex justify-content-center">
     <table class="table table-bordered table-striped">

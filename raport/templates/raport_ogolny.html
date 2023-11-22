@@ -25,8 +25,8 @@
                 <th>Zmiana</th>
                 <th>Początek szkolenia</th>
                 <th>Planowany koniec szkolenia</th>
-                <th>Ilość zrealizowanych szkoleń</th>
                 <th>Ile dni w planie zostało</th>
+                <th>Ilość zrealizowanych szkoleń</th>
                 <th>Ilość urlopów</th>
                 <th>Ilość braków szkoleń</th>
                 <th>Przeprowadzony audyt</th>
@@ -41,9 +41,9 @@
                     <td>{{ uczen.category }}</td>
                     <td>{{ uczen.planned_start }}</td>
                     <td>{{ uczen.planned_end }}</td>
+                    <td>{{ uczen.oblicz_pozostaly_czas }}</td>
                     <td><strong style="color: green;" class="green-text">{{ uczen.szkolenie.count }} / {{ uczen.ilosc_szkolen.dni }}
                         ({{ uczen.procent_wykonania }}%)</strong></td>
-                    <td>{{ uczen.oblicz_pozostaly_czas }}</td>
                     <td>{{ uczen.ilosc_nieobecnosci }}</td>
                     <td>{{ uczen.ilosc_braku_szkolen }}</td>
                     <td>
@@ -58,7 +58,8 @@
             <thead>
                  <tr>
                     <th colspan="11">
-                        <div class="row" style="margin: 20px;">
+                        <br>
+                        <div class="row" style="margin: 0px;">
                             <div class="col-md-7">
                                 <h3>Przyczyny braku szkoleń:</h3>
                                 {% for t in tekst %}

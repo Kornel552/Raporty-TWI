@@ -17,7 +17,6 @@ from django.views.decorators.http import require_http_methods
 from io import BytesIO
 import base64
 from datetime import timedelta
-from collections import Counter
 
 def signup_page(request):
     context = {}
@@ -222,36 +221,41 @@ def raport_ogolny(request):
                             f'<a href="http://127.0.0.1:8000/">wróć</a>', status=403)
     data_dict = defaultdict(lambda: {'szkolenia': 0, 'braki_szkolenia': 0, 'nieobecnosci': 0})
     planowane_szkolenia_na_tydzien = defaultdict(int)
-
+    przesuniete_dni = []
+    # Przetwarzanie każdego ucznia
     for uczen in Uczen.objects.all():
         start_date = uczen.planned_start
         end_date = uczen.planned_end
-        current_week = start_date.isocalendar()[1]
-
         dni_wolne_ucznia = [d.data for d in uczen.dzien_wolny.all()]
         braki_szkolenia_ucznia = [b.data for b in uczen.brak_szkolenia.all()]
         nieobecnosci_ucznia = [n.data for n in uczen.nieobecnosc.all()]
 
-        dni_przesuniecia = sum(
-            start_date + timedelta(days=i) in braki_szkolenia_ucznia + nieobecnosci_ucznia for i in
-            range((end_date - start_date).days + 1))
-        new_end_date = end_date + timedelta(days=dni_przesuniecia)
+        dni_szkolenia_do_zrealizowania = uczen.ilosc_szkolen.dni
 
-        while start_date <= new_end_date:
-            end_of_week = start_date + timedelta(days=(6 - start_date.weekday()))
-            if end_of_week > new_end_date:
-                end_of_week = new_end_date
 
-            dni_szkolenia = (end_of_week - start_date).days + 1
-            dni_wolne_w_tygodniu = sum(
-                start_date + timedelta(days=i) in dni_wolne_ucznia for i in
-                range((end_of_week - start_date).days + 1))
-            dni_szkolenia -= dni_wolne_w_tygodniu
+        while dni_szkolenia_do_zrealizowania > 0:
+            # Sprawdzenie, czy dzień jest dniem wolnym, brakiem szkolenia lub nieobecnością
+            if start_date in dni_wolne_ucznia or start_date in braki_szkolenia_ucznia or start_date in nieobecnosci_ucznia:
+                przesuniete_dni.append(start_date)
+                # Przesunięcie planowanego końca, jeśli jest to dzień wolny
+                if start_date in dni_wolne_ucznia:
+                    end_date += timedelta(days=1)
+            else:
+                # Dodanie dnia szkoleniowego
+                current_week = start_date.isocalendar()[1]
+                planowane_szkolenia_na_tydzien[current_week] += 1
+                dni_szkolenia_do_zrealizowania -= 1
 
-            planowane_szkolenia_na_tydzien[current_week] += min(dni_szkolenia, uczen.ilosc_szkolen.dni)
+            start_date += timedelta(days=1)
 
-            start_date = end_of_week + timedelta(days=1)
-            current_week = start_date.isocalendar()[1]
+            if start_date > end_date and dni_szkolenia_do_zrealizowania > 0:
+                end_date += timedelta(days=1)
+
+        #
+        for dzien_wolny in dni_wolne_ucznia:
+            holiday_week = dzien_wolny.isocalendar()[1]
+            if planowane_szkolenia_na_tydzien[holiday_week] >= 0:
+                planowane_szkolenia_na_tydzien[holiday_week] -= 1
 
     # Zliczanie rekordów i przypisywanie ich do numeru tygodnia
     szkolenia_counts = Szkolenie.objects.annotate(week=ExtractWeek('data')).values('week').annotate(total=Count('id'))
@@ -286,11 +290,15 @@ def raport_ogolny(request):
         ax.bar_label(i, label_type='center')
 
     # Dodanie linii dla planowanych szkoleń
-    planowane_szkolenia_values = [planowane_szkolenia_na_tydzien[week] for week in weeks]
-    ax.plot(weeks, planowane_szkolenia_values, color='orange', marker='o', linestyle='-', label='Planowane szkolenia')
+    planowane_szkolenia_values = [
+        planowane_szkolenia_na_tydzien[week] + len([d for d in przesuniete_dni if d.isocalendar()[1] == week]) for week
+        in weeks]
+    ax.plot(weeks, planowane_szkolenia_values, color='orange', marker='o', linestyle='-',
+            label='Planowane szkolenia')
+
 
     # Dodanie etykiet i legendy
-    ax.set_xlabel('Tydzień')
+    ax.set_xlabel('Numer tygodnia')
     ax.set_ylabel('Dni robocze')
     ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
     ax.set_xticks(weeks)

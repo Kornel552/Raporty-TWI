@@ -21,11 +21,11 @@
 {% if wybrany_uczen %}
     <div>
         <h3>Wybrany uczeń: {{ wybrany_uczen }}</h3>
-        <p>Liczba zrealizowanych dni szkoleniowych: <strong class="green-text">{{ liczba_szkolen }} / {{ calkowita_ilosc_szkolen }} ({{ procent_wykonania }}%)</strong></p>
+        <h5>Liczba zrealizowanych dni szkoleniowych: <strong class="green-text">{{ liczba_szkolen }} / {{ calkowita_ilosc_szkolen }} ({{ procent_wykonania }}%)</strong></h5>
     </div>
 {% endif %}
 <br>
-    <label for="data">Wybierz datę i rodzaj szkolenia:</label>
+    <h5><label for="data">Wybierz datę i rodzaj szkolenia:</label></h5>
     <form method="post">
 
         {% csrf_token %}
@@ -46,7 +46,7 @@
 <div>
     <div class="row">
         <div class="col-md-7" style="margin-left: 30px;">
-            Opis braku szkoleń:
+            <h5>Opis braku szkoleń:</h5>
             <form method="post">
                 {% csrf_token %}
                 <textarea name="tresc" style="width: 400px; height: 100px;"></textarea>

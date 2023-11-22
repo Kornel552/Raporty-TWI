@@ -21,7 +21,7 @@ class LastActiveForm(forms.ModelForm):
             'name': 'Imię',
             'last_name': 'Nazwisko',
             'planned_start': 'Planowany start',
-            'planned_end': 'Planowany koniec\n(Uwzględnij WSZYSTKIE dni wole w planie!)',
+            'planned_end': 'Planowany koniec',
             'ilosc_szkolen': 'Ilość dni szkoleniowych',
             'category': 'Zmiana'
         }

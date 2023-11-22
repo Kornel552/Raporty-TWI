@@ -41,8 +41,7 @@ class Uczen(models.Model):
             planned_end_date = self.planned_end
 
         pozostaly_czas = (planned_end_date - timezone.now().date()).days
-        liczba_dni_nieobecnosci = self.nieobecnosc.count()
-        pozostaly_czas += liczba_dni_nieobecnosci
+
 
         return pozostaly_czas
 
